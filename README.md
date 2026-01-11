@@ -153,9 +153,10 @@ make clean      - 백업 파일 삭제
 - executive-cio, executive-ciso, executive-cmo, executive-coo
 - executive-cpo, executive-cto
 
-### 특수 에이전트 (2개)
+### 특수 에이전트 (3개)
 - new-feature: 새 기능 개발 오케스트레이터
 - team-discussion: 팀 간 협업 토론 오케스트레이터
+- prototyping-workflow: 프론트엔드 개발 전 워크플로우 오케스트레이터
 
 ## 업데이트
 
