@@ -1,0 +1,32 @@
+# Credentials
+.credentials.json
+*.credentials
+*.key
+*.pem
+
+# API Keys
+.env
+.env.local
+.env.*.local
+
+# MCP Server configs with secrets
+.mcp.json
+
+# Local settings
+settings.local.json
+
+# Cache and temporary files
+cache/
+*.cache
+*.tmp
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo

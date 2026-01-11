@@ -1,0 +1,19 @@
+{
+  "name": "shaul-agents",
+  "description": "Shaul Corporation 멀티에이전트 협업 시스템 - 16개 팀, 78개 전문 에이전트",
+  "version": "1.0.0",
+  "author": {
+    "name": "Shaul Corporation"
+  },
+  "homepage": "https://github.com/shaul-corporation/shaul-agents-plugin",
+  "keywords": [
+    "enterprise",
+    "multi-agent",
+    "korean",
+    "collaboration",
+    "development",
+    "devops",
+    "design"
+  ],
+  "license": "MIT"
+}
