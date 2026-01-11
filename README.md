@@ -2,31 +2,81 @@
 
 Shaul Corporation 멀티에이전트 협업 시스템을 위한 Claude Code 플러그인입니다.
 
+> **Note**: 이 저장소는 **Private** 저장소입니다. 접근 권한이 필요합니다.
+
 ## 구성 요소
 
 - **16개 팀**: Backend, Frontend, DevOps, SRE, Security, DBA, Design, UX-UI, PM, QA, Data, Docs, Growth, Mobile, Infra, Executive
 - **78개 전문 에이전트**: 각 팀별 전문화된 AI 에이전트
 - **70개+ Commands**: 역할별 슬래시 명령어
 
-## 설치 방법
+## 사전 준비
 
-### 방법 1: 직접 Clone (권장)
+Private 저장소이므로 다음 중 하나의 인증 방법이 필요합니다:
+
+### 방법 A: SSH 키 설정 (권장)
 
 ```bash
-# 플러그인 저장소 clone
-git clone https://github.com/YOUR_USERNAME/shaul-agents-plugin.git ~/shaul-agents-plugin
+# SSH 키 생성 (없는 경우)
+ssh-keygen -t ed25519 -C "your_email@example.com"
+
+# SSH 공개키 복사
+cat ~/.ssh/id_ed25519.pub
+
+# GitHub Settings > SSH and GPG keys > New SSH key 에서 등록
+```
+
+### 방법 B: GitHub CLI 설치
+
+```bash
+# macOS
+brew install gh
+
+# Ubuntu/Debian
+sudo apt install gh
+
+# 로그인
+gh auth login
+```
+
+## 설치 방법
+
+### 방법 1: Makefile 사용 (권장)
+
+```bash
+# SSH 방식
+git clone git@github.com:shaul1991/shaul-agents-plugin.git ~/shaul-agents-plugin
+
+# 또는 GitHub CLI 방식
+gh repo clone shaul1991/shaul-agents-plugin ~/shaul-agents-plugin
+
+# 설치
+cd ~/shaul-agents-plugin
+make install
+```
+
+### 방법 2: 수동 설치
+
+```bash
+# SSH 방식으로 clone
+git clone git@github.com:shaul1991/shaul-agents-plugin.git ~/shaul-agents-plugin
 
 # 심볼릭 링크 생성
-ln -s ~/shaul-agents-plugin/commands ~/.claude/commands
-ln -s ~/shaul-agents-plugin/skills ~/.claude/skills
+ln -sf ~/shaul-agents-plugin/commands ~/.claude/commands
+ln -sf ~/shaul-agents-plugin/skills ~/.claude/skills
 cp ~/shaul-agents-plugin/CLAUDE.md ~/.claude/CLAUDE.md
 ```
 
-### 방법 2: plugins 디렉토리에 직접 설치
+## Makefile 명령어
 
-```bash
-cd ~/.claude
-git clone https://github.com/YOUR_USERNAME/shaul-agents-plugin.git plugins/shaul-agents
+```
+make install    - 플러그인 설치 (심볼릭 링크 생성)
+make uninstall  - 플러그인 제거
+make update     - 최신 버전으로 업데이트
+make status     - 현재 설치 상태 확인
+make backup     - 기존 설정 백업
+make restore    - 백업에서 복원
+make clean      - 백업 파일 삭제
 ```
 
 ## 사용 방법
@@ -110,15 +160,34 @@ git clone https://github.com/YOUR_USERNAME/shaul-agents-plugin.git plugins/shaul
 ## 업데이트
 
 ```bash
-cd ~/shaul-agents-plugin  # 또는 설치된 경로
-git pull origin main
+cd ~/shaul-agents-plugin
+make update
 ```
+
+## 문제 해결
+
+### Permission denied (publickey) 오류
+
+SSH 키가 설정되지 않았습니다:
+```bash
+# SSH 키 생성
+ssh-keygen -t ed25519 -C "your_email@example.com"
+
+# GitHub에 공개키 등록
+cat ~/.ssh/id_ed25519.pub
+# 출력된 내용을 GitHub Settings > SSH keys 에 추가
+```
+
+### Repository not found 오류
+
+저장소 접근 권한이 없습니다. 관리자에게 권한을 요청하세요.
 
 ## 주의사항
 
-- MCP 서버 설정(GitHub, Slack 등)은 각 컴퓨터에서 별도로 구성해야 합니다.
-- API 키나 credentials는 이 플러그인에 포함되지 않습니다.
+- 이 저장소는 **Private** 저장소입니다
+- MCP 서버 설정(GitHub, Slack 등)은 각 컴퓨터에서 별도로 구성해야 합니다
+- API 키나 credentials는 이 플러그인에 포함되지 않습니다
 
 ## 라이선스
 
-MIT License
+Proprietary - Shaul Corporation

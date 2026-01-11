@@ -5,7 +5,8 @@
   "author": {
     "name": "Shaul Corporation"
   },
-  "homepage": "https://github.com/shaul-corporation/shaul-agents-plugin",
+  "homepage": "https://github.com/shaul1991/shaul-agents-plugin",
+  "private": true,
   "keywords": [
     "enterprise",
     "multi-agent",
