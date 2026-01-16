@@ -156,8 +156,12 @@ class UserResource extends JsonResource
 ## Eloquent 모범 사례
 
 ```php
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 class User extends Model
 {
+    use SoftDeletes; // Soft Delete 활성화
+
     // Mass Assignment 보호
     protected $fillable = ['name', 'email', 'password'];
 
@@ -198,6 +202,44 @@ class User extends Model
 }
 ```
 
+### Soft Delete 사용법
+
+```php
+// 마이그레이션에 deleted_at 컬럼 추가
+Schema::table('users', function (Blueprint $table) {
+    $table->softDeletes(); // deleted_at 컬럼 추가
+});
+
+// Soft Delete 실행 (deleted_at에 타임스탬프 설정)
+$user->delete();
+
+// 기본 쿼리 - soft deleted 레코드 제외
+$users = User::all(); // deleted_at이 null인 레코드만
+
+// Soft deleted 레코드 포함 조회
+$allUsers = User::withTrashed()->get();
+
+// Soft deleted 레코드만 조회
+$deletedUsers = User::onlyTrashed()->get();
+
+// 복원 (deleted_at을 null로)
+$user->restore();
+
+// 영구 삭제 (DB에서 완전 삭제)
+$user->forceDelete();
+
+// 관계에서 Soft Delete 적용
+public function posts(): HasMany
+{
+    return $this->hasMany(Post::class)->withTrashed(); // 삭제된 것도 포함
+}
+
+// Soft deleted 여부 확인
+if ($user->trashed()) {
+    // 삭제된 상태
+}
+```
+
 ## 마이그레이션 & 시더
 
 ```php
@@ -225,17 +267,91 @@ User::factory()
 
 ## 테스트 작성
 
+> **테스트 메서드명은 한글로 상세히 작성**하여 테스트 의도를 명확히 합니다.
+
+### Pest PHP (권장)
+
+**권장 이유:**
+- **간결한 문법**: 클래스/메서드 없이 함수형으로 작성
+- **자연스러운 한글 테스트명**: `it('사용자가 로그인할 수 있다')` 형태로 문장처럼 작성
+- **Expectation API**: `expect()->toBe()` 체이닝으로 가독성 향상
+- **Laravel 11 기본 채택**: Laravel 공식 테스트 프레임워크
+- **PHPUnit 호환**: 기존 PHPUnit 테스트와 혼용 가능
+
+```php
+uses(RefreshDatabase::class);
+
+describe('UserService', function () {
+    it('유효한 데이터로 사용자를 생성할 수 있다', function () {
+        // Arrange
+        $data = [
+            'name' => '홍길동',
+            'email' => 'hong@example.com',
+            'password' => 'password123',
+        ];
+
+        // Act
+        $user = app(UserService::class)->create($data);
+
+        // Assert
+        expect($user)->toBeInstanceOf(User::class);
+        $this->assertDatabaseHas('users', [
+            'email' => 'hong@example.com',
+        ]);
+        expect(Hash::check('password123', $user->password))->toBeTrue();
+    });
+
+    it('이메일이 중복되면 사용자 생성에 실패한다', function () {
+        // Arrange
+        User::factory()->create(['email' => 'hong@example.com']);
+
+        // Act & Assert
+        expect(fn () => app(UserService::class)->create([
+            'name' => '김철수',
+            'email' => 'hong@example.com',
+            'password' => 'password123',
+        ]))->toThrow(QueryException::class);
+    });
+
+    it('소프트 삭제된 사용자는 기본 조회에서 제외된다', function () {
+        // Arrange
+        $user = User::factory()->create();
+        $user->delete();
+
+        // Act & Assert
+        expect(User::find($user->id))->toBeNull();
+        expect(User::withTrashed()->find($user->id))->not->toBeNull();
+    });
+
+    it('소프트 삭제된 사용자를 복원할 수 있다', function () {
+        // Arrange
+        $user = User::factory()->create();
+        $user->delete();
+
+        // Act
+        $user->restore();
+
+        // Assert
+        expect($user->trashed())->toBeFalse();
+        expect(User::find($user->id))->not->toBeNull();
+    });
+});
+```
+
+### PHPUnit
+
 ```php
 class UserServiceTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_can_create_user(): void
+    /** @test */
+    public function 유효한_데이터로_사용자를_생성할_수_있다(): void
     {
         // Arrange
         $data = [
-            'name' => 'John Doe',
-            'email' => 'john@example.com',
+            'name' => '홍길동',
+            'email' => 'hong@example.com',
             'password' => 'password123',
         ];
 
@@ -244,22 +360,55 @@ class UserServiceTest extends TestCase
 
         // Assert
         $this->assertDatabaseHas('users', [
-            'email' => 'john@example.com',
+            'email' => 'hong@example.com',
         ]);
         $this->assertTrue(Hash::check('password123', $user->password));
     }
 
-    public function test_cannot_create_user_with_duplicate_email(): void
+    /** @test */
+    public function 이메일이_중복되면_사용자_생성에_실패한다(): void
     {
-        User::factory()->create(['email' => 'john@example.com']);
+        // Arrange
+        User::factory()->create(['email' => 'hong@example.com']);
 
+        // Assert
         $this->expectException(QueryException::class);
 
+        // Act
         app(UserService::class)->create([
-            'name' => 'Jane Doe',
-            'email' => 'john@example.com',
+            'name' => '김철수',
+            'email' => 'hong@example.com',
             'password' => 'password123',
         ]);
+    }
+
+    /** @test */
+    public function 소프트_삭제된_사용자는_기본_조회에서_제외된다(): void
+    {
+        // Arrange
+        $user = User::factory()->create();
+
+        // Act
+        $user->delete();
+
+        // Assert
+        $this->assertNull(User::find($user->id));
+        $this->assertNotNull(User::withTrashed()->find($user->id));
+    }
+
+    /** @test */
+    public function 소프트_삭제된_사용자를_복원할_수_있다(): void
+    {
+        // Arrange
+        $user = User::factory()->create();
+        $user->delete();
+
+        // Act
+        $user->restore();
+
+        // Assert
+        $this->assertFalse($user->trashed());
+        $this->assertNotNull(User::find($user->id));
     }
 }
 ```
